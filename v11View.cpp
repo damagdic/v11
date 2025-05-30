@@ -23,13 +23,21 @@ BEGIN_MESSAGE_MAP(Cv11View, CView)
 	ON_COMMAND(ID_FILE_PRINT, &CView::OnFilePrint)
 	ON_COMMAND(ID_FILE_PRINT_DIRECT, &CView::OnFilePrint)
 	ON_COMMAND(ID_FILE_PRINT_PREVIEW, &Cv11View::OnFilePrintPreview)
+	ON_COMMAND(ID_SHAPE, &Cv11View::OnShapeChanged)
+	ON_COMMAND(ID_COLOR, &Cv11View::OnColorChanged)
+	ON_REGISTERED_MESSAGE(AFX_WM_ON_HIGHLIGHT_RIBBON_LIST_ITEM, &Cv11View::OnHighlightRibbonListItem)
 	ON_WM_CONTEXTMENU()
 	ON_WM_RBUTTONUP()
+    ON_WM_LBUTTONDOWN()
 END_MESSAGE_MAP()
 
 // Cv11View construction/destruction
 
-Cv11View::Cv11View() {}
+Cv11View::Cv11View() {
+	m_shape = 0;
+	m_color = RGB(0, 0, 0);
+	m_bPreview = FALSE;
+}
 
 Cv11View::~Cv11View()
 {
@@ -47,6 +55,28 @@ BOOL Cv11View::PreCreateWindow(CREATESTRUCT& cs)
 
 void Cv11View::OnDraw(CDC* pDC)
 {
+
+    if (m_rc.IsRectEmpty())
+    {
+        m_rc = CRect(50, 50, 200, 150); // neki fiksni pravokutnik
+    }
+	CPen pen(PS_SOLID, 2, m_color);
+	CPen* pOldPen = pDC->SelectObject(&pen);
+
+	switch (m_shape)
+	{
+	case 0:
+		pDC->Rectangle(m_rc);
+		break;
+	case 1:
+		pDC->Ellipse(m_rc);
+		break;
+	case 2:
+		pDC->RoundRect(m_rc, CPoint(20, 20));
+		break;
+	}
+
+	pDC->SelectObject(pOldPen);
 }
 
 
@@ -82,12 +112,90 @@ void Cv11View::OnRButtonUp(UINT /* nFlags */, CPoint point)
 	OnContextMenu(this, point);
 }
 
+void Cv11View::OnLButtonDown(UINT nFlags, CPoint point)
+{
+	CRectTracker tracker;
+	if (tracker.TrackRubberBand(this, point))
+	{
+		m_rc = tracker.m_rect;
+		Invalidate();
+	}
+
+	CView::OnLButtonDown(nFlags, point);
+}
+
 void Cv11View::OnContextMenu(CWnd* /* pWnd */, CPoint point)
 {
 #ifndef SHARED_HANDLERS
 	theApp.GetContextMenuManager()->ShowPopupMenu(IDR_POPUP_EDIT, point.x, point.y, this, TRUE);
 #endif
 }
+
+void Cv11View::OnShapeChanged()
+{
+    CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*> arr;
+    ((CMainFrame*)AfxGetMainWnd())->m_wndRibbonBar.GetElementsByID(ID_SHAPE, arr);
+    if (!arr.IsEmpty())
+    {
+        CMFCRibbonGallery* pGallery = (CMFCRibbonGallery*)arr.GetAt(0);
+        m_shape = pGallery->GetSelectedItem();
+        Invalidate();
+    }
+}
+
+void Cv11View::OnColorChanged()
+{
+    CArray<CMFCRibbonBaseElement*, CMFCRibbonBaseElement*> arr;
+    ((CMainFrame*)AfxGetMainWnd())->m_wndRibbonBar.GetElementsByID(ID_COLOR, arr);
+    if (!arr.IsEmpty())
+    {
+        CMFCRibbonColorButton* pBtn = (CMFCRibbonColorButton*)arr.GetAt(0);
+        m_color = pBtn->GetColor();
+        Invalidate();
+    }
+}
+
+LRESULT Cv11View::OnHighlightRibbonListItem(WPARAM wp, LPARAM lp)
+{
+    int index = (int)wp;
+    CMFCRibbonBaseElement* pElem = (CMFCRibbonBaseElement*)lp;
+    UINT id = pElem->GetID(); // ID_SHAPE ili ID_COLOR
+
+    static int savedShape = -1;
+    static COLORREF savedColor = RGB(0, 0, 0);
+
+    if (id == ID_SHAPE)
+    {
+        if (index == -1)
+        {
+            m_shape = savedShape;
+        }
+        else
+        {
+            if (savedShape == -1)
+                savedShape = m_shape;
+            m_shape = index;
+        }
+    }
+    else if (id == ID_COLOR)
+    {
+        CMFCRibbonColorButton* pColorBtn = (CMFCRibbonColorButton*)pElem;
+        if (index == -1)
+        {
+            m_color = savedColor;
+        }
+        else
+        {
+            if (savedColor == RGB(0, 0, 0)) // inicijalna vrijednost, možeš bolje
+                savedColor = m_color;
+            m_color = pColorBtn->GetHighlightedColor();
+        }
+    }
+
+    Invalidate();
+    return 0;
+}
+
 
 
 // Cv11View diagnostics

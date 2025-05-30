@@ -5,8 +5,18 @@ class Cv11View : public CView
 protected: // create from serialization only
 	Cv11View();
 	DECLARE_DYNCREATE(Cv11View)
+	
 
 // Attributes
+
+protected: 
+	CRect m_rc;
+	COLORREF m_color;
+	int m_shape; // 0 = Rectangle, 1 = Ellipse, 2 = RoundRect
+
+	COLORREF m_oldColor;
+	int m_oldShape;
+	BOOL m_bPreview;
 public:
 	Cv11Doc* GetDocument() const;
 
@@ -37,6 +47,10 @@ protected:
 	afx_msg void OnFilePrintPreview();
 	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
+	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+	afx_msg LRESULT OnHighlightRibbonListItem(WPARAM wp, LPARAM lp);
+	afx_msg void OnShapeChanged();
+	afx_msg void OnColorChanged();
 	DECLARE_MESSAGE_MAP()
 public:
 };
