@@ -13,6 +13,8 @@ protected:
 	CRect m_rc;
 	COLORREF m_color;
 	int m_shape; // 0 = Rectangle, 1 = Ellipse, 2 = RoundRect
+	int savedShape;
+	COLORREF savedColor;
 
 	COLORREF m_oldColor;
 	int m_oldShape;
