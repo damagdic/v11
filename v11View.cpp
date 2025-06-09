@@ -35,7 +35,7 @@ Cv11View::Cv11View()
 	m_color = RGB(0, 0, 0);
 	m_bPreview = FALSE;
 
-	savedShape = -1;
+	savedShape = 0;
 	savedColor = RGB(0, 0, 0);
 }
 
@@ -49,6 +49,7 @@ BOOL Cv11View::PreCreateWindow(CREATESTRUCT& cs)
 }
 
 // Cv11View drawing
+
 
 void Cv11View::OnDraw(CDC* pDC)
 {
@@ -128,7 +129,7 @@ void Cv11View::OnShapeChanged()
 	if (!arr.IsEmpty())
 	{
 		CMFCRibbonGallery* pGallery = (CMFCRibbonGallery*)arr.GetAt(0);
-		m_shape = pGallery->GetSelectedItem();
+		savedShape = m_shape = pGallery->GetSelectedItem();
 		Invalidate();
 	}
 }
@@ -141,7 +142,7 @@ void Cv11View::OnColorChanged()
 	if (!arr.IsEmpty())
 	{
 		CMFCRibbonColorButton* pBtn = (CMFCRibbonColorButton*)arr.GetAt(0);
-		m_color = pBtn->GetColor();
+		savedColor = m_color = pBtn->GetColor();
 		Invalidate();
 	}
 }
@@ -158,12 +159,9 @@ LRESULT Cv11View::OnHighlightRibbonListItem(WPARAM wp, LPARAM lp)
 		if (index == -1)
 		{
 			m_shape = savedShape;
-			savedShape = -1; 
 		}
 		else
 		{
-			if (savedShape == -1)
-				savedShape = m_shape;
 			m_shape = index;
 		}
 	}
@@ -173,12 +171,9 @@ LRESULT Cv11View::OnHighlightRibbonListItem(WPARAM wp, LPARAM lp)
 		if (index == -1)
 		{
 			m_color = savedColor;
-			savedColor = RGB(0, 0, 0); 
 		}
 		else
 		{
-			if (savedColor == RGB(0, 0, 0))
-				savedColor = m_color;
 			m_color = pColorBtn->GetHighlightedColor();
 		}
 	}
